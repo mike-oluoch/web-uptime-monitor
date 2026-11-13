@@ -12,6 +12,7 @@
       --muted: #94a3b8;
       --green: #22c55e;
       --red: #ef4444;
+      --accent: #3b82f6;
       --border: #334155;
     }
     * { box-sizing: border-box; font-family: system-ui, -apple-system, sans-serif; }
@@ -20,12 +21,36 @@
     header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem; }
     h1 { margin: 0; font-size: 1.5rem; }
     .meta { color: var(--muted); font-size: 0.9rem; margin-top: 0.35rem; }
+    .search-form { display: flex; gap: 0.6rem; margin-bottom: 1rem; }
+    .search-form input {
+      flex: 1;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.7rem 1rem;
+      color: var(--text);
+      font-size: 0.95rem;
+      outline: none;
+    }
+    .search-form input:focus { border-color: var(--accent); }
+    .search-form button {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 0.7rem 1.2rem;
+      font-weight: 600;
+      font-size: 0.95rem;
+      cursor: pointer;
+    }
+    .search-form button:hover { opacity: 0.92; }
     .banner { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 1rem 1.25rem; margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; }
     .grid { display: grid; gap: 0.85rem; }
-    .card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 1rem 1.25rem; display: flex; justify-content: space-between; align-items: center; }
-    .site-name { font-weight: 600; font-size: 1.05rem; }
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 1rem 1.25rem; display: flex; justify-content: space-between; align-items: center; gap: 1rem; }
+    .live-card { border-color: var(--accent); margin-bottom: 1.25rem; display: none; }
+    .site-name { font-weight: 600; font-size: 1.05rem; word-break: break-all; }
     .site-url { color: var(--muted); font-size: 0.85rem; text-decoration: none; }
-    .metrics { display: flex; align-items: center; gap: 1rem; }
+    .metrics { display: flex; align-items: center; gap: 1rem; flex-shrink: 0; }
     .latency { color: var(--muted); font-variant-numeric: tabular-nums; font-size: 0.9rem; }
     .badge { padding: 0.25rem 0.65rem; border-radius: 999px; font-size: 0.8rem; font-weight: 600; }
     .up { background: rgba(34, 197, 94, 0.15); color: var(--green); }
@@ -42,6 +67,13 @@
       <div class="meta" id="last-updated">Loading metrics...</div>
     </header>
 
+    <form class="search-form" onsubmit="checkCustomUrl(event)">
+      <input type="text" id="custom-url" placeholder="Test any live URL (e.g., https://google.com)..." required />
+      <button type="submit">Check Live</button>
+    </form>
+
+    <div class="card live-card" id="live-result"></div>
+
     <div class="banner">
       <strong id="overall-status">Checking system status...</strong>
       <span class="meta" id="site-count"></span>
@@ -51,6 +83,63 @@
   </div>
 
   <script>
+    function escapeHtml(str) {
+      return str.replace(/[&<>"']/g, c => ({
+        "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+      }[c]));
+    }
+
+    async function checkCustomUrl(e) {
+      e.preventDefault();
+      const input = document.getElementById("custom-url");
+      const resultBox = document.getElementById("live-result");
+      let targetUrl = input.value.trim();
+      if (!targetUrl) return;
+      if (!/^https?:\/\//i.test(targetUrl)) {
+        targetUrl = "https://" + targetUrl;
+      }
+
+      resultBox.style.display = "flex";
+      resultBox.innerHTML = `<span class="meta">Pinging ${escapeHtml(targetUrl)}...</span>`;
+
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 8000);
+      const start = performance.now();
+
+      try {
+        await fetch(targetUrl, {
+          mode: "no-cors",
+          cache: "no-store",
+          signal: controller.signal,
+        });
+        clearTimeout(timeoutId);
+        const latency = Math.round(performance.now() - start);
+        resultBox.innerHTML = `
+          <div>
+            <div class="site-name">${escapeHtml(targetUrl)}</div>
+            <div class="site-url">On-demand browser reachability probe</div>
+          </div>
+          <div class="metrics">
+            <span class="latency">${latency} ms</span>
+            <span class="badge up">REACHABLE</span>
+          </div>
+        `;
+      } catch (err) {
+        clearTimeout(timeoutId);
+        const latency = Math.round(performance.now() - start);
+        resultBox.innerHTML = `
+          <div>
+            <div class="site-name">${escapeHtml(targetUrl)}</div>
+            <div class="site-url">Host unreachable, invalid domain, or timed out</div>
+          </div>
+          <div class="metrics">
+            <span class="latency">${latency} ms</span>
+            <span class="badge down">UNREACHABLE</span>
+          </div>
+        `;
+      }
+    }
+
     async function loadStatus() {
       try {
         const res = await fetch(`./status.json?t=${Date.now()}`);
@@ -64,14 +153,14 @@
         document.getElementById("overall-status").textContent = allUp
           ? "All Monitored Services Operational"
           : "One or More Services Degraded";
-        document.getElementById("site-count").textContent = `${data.sites.length} endpoints`;
+        document.getElementById("site-count").textContent = `${data.sites.length} scheduled endpoints`;
 
         const list = document.getElementById("sites-list");
         list.innerHTML = data.sites.map(site => `
           <div class="card">
             <div>
-              <div class="site-name">${site.name}</div>
-              <a class="site-url" href="${site.url}" target="_blank" rel="noopener">${site.url}</a>
+              <div class="site-name">${escapeHtml(site.name)}</div>
+              <a class="site-url" href="${escapeHtml(site.url)}" target="_blank" rel="noopener">${escapeHtml(site.url)}</a>
             </div>
             <div class="metrics">
               <span class="latency">${site.latency_ms} ms (HTTP ${site.status_code})</span>
@@ -84,6 +173,7 @@
           "Waiting for first GitHub Actions run to generate status.json...";
       }
     }
+
     loadStatus();
   </script>
 </body>
