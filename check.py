@@ -8,7 +8,8 @@ SITES = [
     {"name": "GitHub", "url": "https://github.com"},
     {"name": "Wikipedia", "url": "https://www.wikipedia.org"},
     {"name": "Cloudflare", "url": "https://www.cloudflare.com"},
-    {"name": "Python.org", "url": "https://www.python.org"},
+    {"name": "Python", "url": "https://www.python.org"},
+    {"name": "USIU", "url": "https://www.usiu.ac.ke/"},
 ]
 
 
