@@ -2,14 +2,14 @@ import json
 import time
 import urllib.error
 import urllib.request
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 SITES = [
     {"name": "GitHub", "url": "https://github.com"},
     {"name": "Wikipedia", "url": "https://www.wikipedia.org"},
-    {"name": "Cloudflare", "url": "https://www.cloudflare.com"},
-    {"name": "Python", "url": "https://www.python.org"},
     {"name": "USIU", "url": "https://www.usiu.ac.ke/"},
+    {"name": "Cloudflare", "url": "https://www.cloudflare.com"},
+    {"name": "Python.org", "url": "https://www.python.org"},
 ]
 
 
@@ -50,9 +50,10 @@ def check_site(site):
 
 
 def main():
+    eat = timezone(timedelta(hours=3))
     results = [check_site(site) for site in SITES]
     payload = {
-        "last_updated": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC"),
+        "last_updated": datetime.now(eat).strftime("%Y-%m-%d %H:%M:%S UTC+3"),
         "runner": "GitHub Actions (ubuntu-latest)",
         "sites": results,
     }
