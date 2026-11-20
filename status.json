@@ -1,5 +1,5 @@
 {
-  "last_updated": "2026-11-20 00:51:20 UTC+3",
+  "last_updated": "2026-11-20 05:57:46 UTC+3",
   "runner": "GitHub Actions (ubuntu-latest)",
   "sites": [
     {
@@ -7,35 +7,35 @@
       "url": "https://github.com",
       "online": true,
       "status_code": 200,
-      "latency_ms": 18
+      "latency_ms": 16
     },
     {
       "name": "Wikipedia",
       "url": "https://www.wikipedia.org",
       "online": true,
       "status_code": 200,
-      "latency_ms": 15
+      "latency_ms": 9
     },
     {
       "name": "USIU",
       "url": "https://www.usiu.ac.ke/",
       "online": true,
       "status_code": 200,
-      "latency_ms": 1233
+      "latency_ms": 1701
     },
     {
       "name": "Cloudflare",
       "url": "https://www.cloudflare.com",
       "online": true,
       "status_code": 200,
-      "latency_ms": 34
+      "latency_ms": 46
     },
     {
       "name": "Python.org",
       "url": "https://www.python.org",
       "online": true,
       "status_code": 200,
-      "latency_ms": 74
+      "latency_ms": 98
     }
   ]
 }
